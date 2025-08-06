@@ -16,6 +16,9 @@ class BodyPerceptionAssessment {
         this.minImageTime = 1000; // 1 second minimum per image
         this.hasCompletedBefore = this.checkPreviousCompletion();
         
+        // Anti-trolling system toggle (temporarily disabled for testing)
+        this.enableAntiTrolling = false; // Set to true to re-enable
+        
         this.elements = {
             welcomeScreen: document.getElementById('welcome-screen'),
             gameScreen: document.getElementById('game-screen'),
@@ -57,6 +60,12 @@ class BodyPerceptionAssessment {
     }
     
     isValidSubmission() {
+        // If anti-trolling is disabled, always return true
+        if (!this.enableAntiTrolling) {
+            console.log('Anti-trolling disabled: allowing submission');
+            return true;
+        }
+        
         const totalTime = this.gameData.endTime - this.gameData.startTime;
         const responses = this.gameData.responses;
         

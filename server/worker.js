@@ -1,5 +1,8 @@
 // Cloudflare Worker for Body Perception Assessment API
 
+// Anti-trolling system toggle (temporarily disabled for testing)
+const ENABLE_ANTI_TROLLING = false; // Set to true to re-enable
+
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -40,20 +43,24 @@ async function handleSubmit(request, env) {
             return createErrorResponse('Invalid response data', 400);
         }
         
-        // Server-side behavioral validation
-        const isValidBehavior = await validateSubmissionBehavior(data, clientIP, env);
-        
-        if (!isValidBehavior) {
-            // Return success but don't store the data (silent rejection)
-            console.log('Silently rejecting submission due to suspicious behavior');
-            return createJsonResponse({
-                success: true,
-                sessionId: generateSessionId(),
-                score: Math.floor(Math.random() * 40) + 30, // Fake score 30-70
-                percentile: Math.floor(Math.random() * 60) + 20, // Fake percentile 20-80
-                category: "About average in weight perception",
-                timestamp: new Date().toISOString()
-            });
+        // Server-side behavioral validation (if enabled)
+        if (ENABLE_ANTI_TROLLING) {
+            const isValidBehavior = await validateSubmissionBehavior(data, clientIP, env);
+            
+            if (!isValidBehavior) {
+                // Return success but don't store the data (silent rejection)
+                console.log('Silently rejecting submission due to suspicious behavior');
+                return createJsonResponse({
+                    success: true,
+                    sessionId: generateSessionId(),
+                    score: Math.floor(Math.random() * 40) + 30, // Fake score 30-70
+                    percentile: Math.floor(Math.random() * 60) + 20, // Fake percentile 20-80
+                    category: "About average in weight perception",
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } else {
+            console.log('Anti-trolling disabled: skipping server-side validation');
         }
         
         // Generate a unique session ID
