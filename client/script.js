@@ -25,12 +25,12 @@ class BodyPerceptionAssessment {
             notFatGrid: document.getElementById('not-fat-grid'),
             fatGrid: document.getElementById('fat-grid'),
             userMarker: document.getElementById('user-marker'),
-            spectrumText: document.getElementById('spectrum-text')
+            spectrumText: document.getElementById('spectrum-text'),
+            userScore: document.getElementById('user-score'),
+            userPercentile: document.getElementById('user-percentile'),
+            offlineIndicator: document.getElementById('offline-indicator')
         };
         
-        this.touchStartX = null;
-        this.touchStartY = null;
-        this.swipeThreshold = 100;
         
         this.init();
     }
@@ -46,22 +46,6 @@ class BodyPerceptionAssessment {
         this.elements.fatBtn.addEventListener('click', () => this.recordResponse(true));
         this.elements.restartBtn.addEventListener('click', () => this.restartGame());
         this.elements.shareBtn.addEventListener('click', () => this.shareResults());
-        
-        // Keyboard controls
-        document.addEventListener('keydown', (e) => this.handleKeyPress(e));
-        
-        // Touch events for swipe gestures
-        this.elements.currentImage.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
-        this.elements.currentImage.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: true });
-        this.elements.currentImage.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-        
-        // Mouse events for desktop drag (optional)
-        this.elements.currentImage.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-        
-        this.mouseDown = false;
-        this.startMouseX = null;
     }
     
     generateImageOrder() {
@@ -184,6 +168,7 @@ class BodyPerceptionAssessment {
         this.gameData.serverResult = result;
         this.gameData.percentile = result.percentile;
         this.gameData.category = result.category;
+        this.gameData.score = result.score || this.calculateLocalScore();
     }
     
     useLocalFallback() {
@@ -212,7 +197,15 @@ class BodyPerceptionAssessment {
         
         this.gameData.percentile = Math.round(percentile);
         this.gameData.category = this.getCategoryFromPercentile(percentile);
+        this.gameData.score = this.calculateLocalScore();
         this.gameData.usedFallback = true;
+    }
+    
+    calculateLocalScore() {
+        // Calculate score based on how many images marked as fat
+        // Score is number of "fat" responses out of 12, as a percentage
+        const fatCount = this.gameData.responses.filter(r => r.isFat).length;
+        return Math.round((fatCount / this.totalImages) * 100);
     }
     
     getCategoryFromPercentile(percentile) {
@@ -253,6 +246,11 @@ class BodyPerceptionAssessment {
     displaySpectrum() {
         const percentile = this.gameData.percentile;
         const category = this.gameData.category;
+        const score = this.gameData.score;
+        
+        // Display score and percentile immediately
+        this.elements.userScore.textContent = `${score}/100`;
+        this.elements.userPercentile.textContent = `${percentile}th`;
         
         setTimeout(() => {
             // Animate marker to position
@@ -260,13 +258,14 @@ class BodyPerceptionAssessment {
             this.elements.userMarker.classList.add('animate');
             
             // Update text
-            const serverStatus = this.gameData.usedFallback ? 
-                ' (offline mode)' : '';
-            
             this.elements.spectrumText.innerHTML = `
-                <strong>${category}</strong><br>
-                You scored in the ${percentile}th percentile${serverStatus}
+                <strong>${category}</strong>
             `;
+            
+            // Show offline indicator if needed
+            if (this.gameData.usedFallback) {
+                this.elements.offlineIndicator.style.display = 'block';
+            }
         }, 1000);
     }
     
@@ -288,108 +287,6 @@ class BodyPerceptionAssessment {
         }
     }
     
-    handleKeyPress(e) {
-        if (this.elements.gameScreen.classList.contains('active')) {
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                this.recordResponse(false);
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                this.recordResponse(true);
-            }
-        }
-    }
-    
-    // Touch event handlers
-    handleTouchStart(e) {
-        this.touchStartX = e.touches[0].clientX;
-        this.touchStartY = e.touches[0].clientY;
-    }
-    
-    handleTouchMove(e) {
-        if (!this.touchStartX || !this.touchStartY) return;
-        
-        const touchCurrentX = e.touches[0].clientX;
-        const touchCurrentY = e.touches[0].clientY;
-        
-        const diffX = this.touchStartX - touchCurrentX;
-        const diffY = this.touchStartY - touchCurrentY;
-        
-        // Only process horizontal swipes
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            // Add visual feedback during swipe
-            const image = this.elements.currentImage;
-            const swipeProgress = Math.min(Math.abs(diffX) / this.swipeThreshold, 1);
-            const rotation = (diffX / this.swipeThreshold) * 15;
-            
-            image.style.transform = `translateX(${-diffX * 0.5}px) rotate(${rotation}deg)`;
-            image.style.opacity = 1 - (swipeProgress * 0.3);
-        }
-    }
-    
-    handleTouchEnd(e) {
-        if (!this.touchStartX || !this.touchStartY) return;
-        
-        const touchEndX = e.changedTouches[0].clientX;
-        const diffX = this.touchStartX - touchEndX;
-        
-        // Reset image transform
-        this.elements.currentImage.style.transform = '';
-        this.elements.currentImage.style.opacity = '';
-        
-        if (Math.abs(diffX) > this.swipeThreshold) {
-            if (diffX > 0) {
-                // Swiped left (not fat)
-                this.recordResponse(false);
-            } else {
-                // Swiped right (fat)
-                this.recordResponse(true);
-            }
-        }
-        
-        this.touchStartX = null;
-        this.touchStartY = null;
-    }
-    
-    // Mouse event handlers (desktop drag)
-    handleMouseDown(e) {
-        this.mouseDown = true;
-        this.startMouseX = e.clientX;
-        e.preventDefault();
-    }
-    
-    handleMouseMove(e) {
-        if (!this.mouseDown || !this.startMouseX) return;
-        
-        const diffX = this.startMouseX - e.clientX;
-        const image = this.elements.currentImage;
-        const swipeProgress = Math.min(Math.abs(diffX) / this.swipeThreshold, 1);
-        const rotation = (diffX / this.swipeThreshold) * 15;
-        
-        image.style.transform = `translateX(${-diffX * 0.5}px) rotate(${rotation}deg)`;
-        image.style.opacity = 1 - (swipeProgress * 0.3);
-    }
-    
-    handleMouseUp(e) {
-        if (!this.mouseDown || !this.startMouseX) return;
-        
-        const diffX = this.startMouseX - e.clientX;
-        
-        // Reset image transform
-        this.elements.currentImage.style.transform = '';
-        this.elements.currentImage.style.opacity = '';
-        
-        if (Math.abs(diffX) > this.swipeThreshold) {
-            if (diffX > 0) {
-                this.recordResponse(false);
-            } else {
-                this.recordResponse(true);
-            }
-        }
-        
-        this.mouseDown = false;
-        this.startMouseX = null;
-    }
     
     restartGame() {
         this.generateImageOrder();

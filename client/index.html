@@ -37,10 +37,6 @@
             
             <div class="image-container">
                 <img id="current-image" src="" alt="Body image for assessment" class="assessment-image">
-                <div class="swipe-hint">
-                    <span class="swipe-left">← Not Fat</span>
-                    <span class="swipe-right">Fat →</span>
-                </div>
             </div>
 
             <div class="controls">
@@ -55,8 +51,7 @@
             </div>
 
             <div class="instructions">
-                <p>Use buttons or keyboard: ← (Not Fat) | → (Fat)</p>
-                <p class="mobile-only">Or swipe the image left/right</p>
+                <p>Use the buttons to make your choice</p>
             </div>
         </div>
     </div>
@@ -80,6 +75,16 @@
 
             <div class="spectrum-section">
                 <h3>Your Body Perception Tendency</h3>
+                <div class="score-display">
+                    <div class="score-item">
+                        <span class="score-label">Your Score:</span>
+                        <span class="score-value" id="user-score">--</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Percentile:</span>
+                        <span class="score-value" id="user-percentile">--</span>
+                    </div>
+                </div>
                 <div class="spectrum-container">
                     <div class="spectrum-labels">
                         <span>Less likely to perceive as fat</span>
@@ -90,6 +95,7 @@
                     </div>
                     <div class="spectrum-description">
                         <p id="spectrum-text">Calculating your position...</p>
+                        <p id="offline-indicator" class="offline-message" style="display: none;">📱 Results calculated offline</p>
                     </div>
                 </div>
             </div>
