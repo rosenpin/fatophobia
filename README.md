@@ -1,147 +1,76 @@
 # Body Perception Assessment
 
-A web-based interactive assessment tool that measures users' tendencies in perceiving body images. Built with vanilla JavaScript and deployed on Cloudflare Pages with Workers for backend functionality.
+An educational web application designed to help people understand their personal biases when assessing body weight and size.
 
-## Features
+## About This Project
 
-- **Interactive Assessment**: Users classify 12 body images in randomized order
-- **Multiple Input Methods**: Button clicks, keyboard navigation (←/→), and touch gestures
-- **Responsive Design**: Optimized for mobile and desktop with smooth animations
-- **Results Analysis**: Visual grids showing classifications and percentile ranking
-- **PWA Support**: Installable web app with offline capabilities
-- **Real-time Analytics**: Server-side data collection and percentile calculations
+### Purpose
 
-## Technology Stack
+This interactive assessment reveals how individuals perceive body weight by presenting 12 different body images for binary classification ("fat" or "not fat"). The primary goal is to make people aware of their own tendencies and biases when evaluating others' bodies, highlighting that such perceptions are inherently subjective and relative rather than objective facts.
 
-- **Frontend**: Vanilla HTML, CSS, JavaScript
-- **Backend**: Cloudflare Workers
-- **Database**: Cloudflare KV storage
-- **Hosting**: Cloudflare Pages
-- **PWA**: Service Worker for offline functionality
+### The Problem We're Addressing
 
-## Setup and Deployment
+In today's society, we often find ourselves caught between two problematic extremes when it comes to body image discussions:
 
-### Prerequisites
+**One extreme** promotes the idea that concepts like "overweight" or body size concerns don't exist at all, dismissing legitimate health considerations and the reality that people do have different body compositions. This perspective, while well-intentioned in fighting stigma, can sometimes ignore important health nuances.
 
-1. Node.js (v16 or higher)
-2. Cloudflare account
-3. Wrangler CLI installed globally:
-   ```bash
-   npm install -g wrangler
-   ```
+**The other extreme** glorifies unrealistic and often unhealthy body standards, promoting body types that are either unattainable for most people or achieved through unhealthy means. This perspective contributes to body dysmorphia, eating disorders, and widespread dissatisfaction with normal, healthy bodies.
 
-### Local Development
+### Our Approach
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+This project aims to find a thoughtful middle ground by:
 
-2. **Set up Cloudflare KV namespace**:
-   ```bash
-   wrangler kv:namespace create "ASSESSMENT_DATA"
-   wrangler kv:namespace create "ASSESSMENT_DATA" --preview
-   ```
-   
-3. **Update wrangler.toml** with your KV namespace IDs
+- **Promoting self-awareness**: Helping users recognize their own perceptual biases
+- **Highlighting subjectivity**: Demonstrating that body size perception varies significantly between individuals
+- **Providing context**: Showing users how their perceptions compare to others through percentile rankings
+- **Encouraging reflection**: Creating a moment for users to consider why they classify bodies the way they do
 
-4. **Start local development**:
-   ```bash
-   # Start Pages development server
-   npm run dev
-   
-   # Start Worker development (in separate terminal)
-   npm run worker:dev
-   ```
+### How It Works
 
-### Production Deployment
+Users are shown 12 body images in random order and must classify each as "fat" or "not fat." Their responses are then compared against all previous users, revealing:
 
-1. **Deploy the Worker**:
-   ```bash
-   npm run worker:deploy
-   ```
+- Their personal scoring pattern
+- How their perceptions align with or differ from the collective average
+- Their percentile ranking relative to other users
 
-2. **Deploy to Cloudflare Pages**:
-   ```bash
-   npm run deploy
-   ```
-   
-   Or connect your GitHub repository to Cloudflare Pages for automatic deployments.
+This comparison isn't meant to judge users as "right" or "wrong," but rather to illustrate the wide spectrum of human perception and encourage more thoughtful, less automatic judgments about bodies.
 
-3. **Configure custom domain** (optional):
-   - Set up your domain in Cloudflare Pages dashboard
-   - Update `wrangler.toml` with your domain information
+### Educational Value
 
-### Environment Configuration
+By participating in this assessment, users often discover:
 
-Update the following files with your specific configuration:
+- Their perceptions may be more or less critical than they realized
+- There's significant variation in how different people perceive the same bodies
+- Cultural and personal biases influence these snap judgments
+- The importance of approaching body-related discussions with more nuance and empathy
 
-- **wrangler.toml**: Replace placeholder domains and KV namespace IDs
-- **worker.js**: Adjust scoring algorithm if needed
-- **manifest.json**: Update icons and screenshots paths
+### A Note on Sensitivity
 
-## Game Flow
+We understand this is a sensitive topic that affects people deeply. This tool is designed for educational reflection, not to shame or categorize people. The goal is to foster more thoughtful, less reactive approaches to how we think about and discuss bodies - both others' and our own.
 
-1. **Welcome Screen**: Brief explanation and start button
-2. **Assessment Phase**: 12 randomized images with binary classification
-3. **Results Screen**: 
-   - Two grids showing user's classifications
-   - Animated spectrum meter showing percentile ranking
-   - Comparison to other users' responses
+---
 
-## Scoring Algorithm
+## Technical Details
 
-The assessment uses a weighted scoring system:
-- Images 1-6: Typically considered "not fat" (higher weight if marked as fat)
-- Images 7-12: Typically considered "fat" (standard weight)
-- Final score normalized to 0-100 range
-- Percentile calculated against all user submissions
+Built with vanilla JavaScript and deployed on Cloudflare Pages with Workers for data collection and analysis.
 
-## Fallback Mode
+### Quick Start
 
-If the server is unavailable, the app uses a local fallback:
-- Default assumption: transition between images 5 and 6
-- Local percentile calculation based on deviation from default
-- Clear indication of offline mode in results
+```bash
+npm install
+npm run dev
+```
 
-## Privacy and Data
+### Deployment
+
+```bash
+npm run deploy
+```
+
+For detailed technical setup, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Privacy
 
 - No personal information collected
-- Only assessment responses and basic metadata stored
-- IP addresses logged for abuse prevention only
-- Data retention: 1 year maximum
-
-## Customization
-
-### Adding More Images
-
-1. Add new images to `/src/` directory (numbered sequentially)
-2. Update `totalImages` in `script.js`
-3. Update `STATIC_ASSETS` in `sw.js`
-4. Adjust scoring algorithm in `worker.js` if needed
-
-### Modifying Categories
-
-Update the `getCategoryFromScore()` function in `worker.js` to adjust the percentile ranges and descriptions.
-
-### Styling Changes
-
-All visual customization can be done through `styles.css`. The design uses CSS custom properties for easy theming.
-
-## Browser Support
-
-- Modern browsers with ES6+ support
-- Progressive Web App features in supported browsers
-- Graceful degradation for older browsers
-- Touch gesture support on mobile devices
-
-## Performance
-
-- Optimized images and assets
-- Service Worker caching for offline use
-- Lazy loading and preloading strategies
-- Minimal JavaScript bundle size
-
-## License
-
-MIT License - feel free to modify and distribute as needed.
+- Only assessment responses stored anonymously
+- Data used solely for percentile calculations
