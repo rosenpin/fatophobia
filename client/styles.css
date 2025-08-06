@@ -370,6 +370,24 @@ body {
     justify-content: center;
     gap: 1rem;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.github-link {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.github-link:hover {
+    color: white;
+    border-color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.1);
 }
 
 /* Loading overlay */
