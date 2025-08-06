@@ -1,0 +1,4 @@
+# Cloudflare Pages Configuration for Body Perception Assessment Frontend
+
+name = "fatophobia"
+pages_build_output_dir = "."

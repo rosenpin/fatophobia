@@ -4,10 +4,12 @@
   "description": "A web-based assessment tool for body image perception tendencies",
   "main": "index.html",
   "scripts": {
-    "dev": "wrangler pages dev .",
-    "deploy": "wrangler pages deploy .",
-    "worker:dev": "wrangler dev",
-    "worker:deploy": "wrangler deploy"
+    "client:dev": "cd client && wrangler pages dev .",
+    "client:deploy": "cd client && wrangler pages deploy .",
+    "server:dev": "cd server && wrangler dev",
+    "server:deploy": "cd server && wrangler deploy",
+    "dev": "npm run client:dev",
+    "deploy": "npm run client:deploy && npm run server:deploy"
   },
   "keywords": ["assessment", "body-image", "web-game", "cloudflare"],
   "author": "",
