@@ -190,12 +190,12 @@ class BodyPerceptionAssessment {
         let percentile = 50; // Start at middle
         
         if (userFatCount < defaultFatCount) {
-            percentile = Math.max(10, 50 - ((defaultFatCount - userFatCount) / defaultFatCount) * 40);
+            percentile = Math.max(1, 50 - ((defaultFatCount - userFatCount) / defaultFatCount) * 40);
         } else if (userFatCount > defaultFatCount) {
-            percentile = Math.min(90, 50 + ((userFatCount - defaultFatCount) / this.totalImages) * 40);
+            percentile = Math.min(99, 50 + ((userFatCount - defaultFatCount) / this.totalImages) * 40);
         }
         
-        this.gameData.percentile = Math.round(percentile);
+        this.gameData.percentile = Math.max(1, Math.min(99, Math.round(percentile)));
         this.gameData.category = this.getCategoryFromPercentile(percentile);
         this.gameData.score = this.calculateLocalScore();
         this.gameData.usedFallback = true;

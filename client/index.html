@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Body Perception Assessment</title>
-    <meta name="description" content="Discover your intuitive perceptions about body image through this interactive assessment">
+    <meta name="description"
+        content="Discover your intuitive perceptions about body image through this interactive assessment">
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#667eea">
@@ -13,6 +15,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Body Perception">
 </head>
+
 <body>
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
@@ -20,7 +23,8 @@
             <h1 class="title">Body Perception Quiz</h1>
             <p class="subtitle">Test your intuitive assessment of body images</p>
             <p class="description">
-                You'll see 12 different body images. For each one, decide whether you consider the person to be "fat" or "not fat." 
+                You'll see 12 different body images. For each one, decide whether you consider the person to be "fat" or
+                "not fat."
                 There are no right or wrong answers - we're measuring natural perceptions.
             </p>
             <button id="start-btn" class="btn-primary">Start Assessment</button>
@@ -34,24 +38,18 @@
                 <div class="progress-fill" id="progress"></div>
                 <span class="progress-text" id="progress-text">1 / 12</span>
             </div>
-            
+
             <div class="image-container">
                 <img id="current-image" src="" alt="Body image for assessment" class="assessment-image">
             </div>
 
             <div class="controls">
                 <button id="not-fat-btn" class="btn-choice btn-not-fat">
-                    <span class="arrow">←</span>
-                    <span>Not Fat</span>
+                    Not Fat
                 </button>
                 <button id="fat-btn" class="btn-choice btn-fat">
-                    <span>Fat</span>
-                    <span class="arrow">→</span>
+                    Fat
                 </button>
-            </div>
-
-            <div class="instructions">
-                <p>Use the buttons to make your choice</p>
             </div>
         </div>
     </div>
@@ -60,13 +58,13 @@
     <div id="results-screen" class="screen">
         <div class="container">
             <h2>Your Assessment Results</h2>
-            
+
             <div class="results-grids">
                 <div class="grid-section">
                     <h3>You marked as "Not Fat"</h3>
                     <div id="not-fat-grid" class="image-grid"></div>
                 </div>
-                
+
                 <div class="grid-section">
                     <h3>You marked as "Fat"</h3>
                     <div id="fat-grid" class="image-grid"></div>
@@ -95,7 +93,8 @@
                     </div>
                     <div class="spectrum-description">
                         <p id="spectrum-text">Calculating your position...</p>
-                        <p id="offline-indicator" class="offline-message" style="display: none;">📱 Results calculated offline</p>
+                        <p id="offline-indicator" class="offline-message" style="display: none;">📱 Results calculated
+                            offline</p>
                     </div>
                 </div>
             </div>
@@ -115,4 +114,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

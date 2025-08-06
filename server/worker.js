@@ -152,7 +152,7 @@ async function calculatePercentile(userScore, env) {
         
         if (globalStats.totalSubmissions < 10) {
             // Not enough data for meaningful percentile, use default
-            return userScore;
+            return Math.max(1, Math.min(99, userScore));
         }
         
         // Estimate percentile based on score distribution
@@ -164,13 +164,13 @@ async function calculatePercentile(userScore, env) {
         const zScore = (userScore - avgScore) / stdDev;
         let percentile = 50 + (zScore * 15); // Approximate conversion
         
-        // Clamp to reasonable bounds
-        return Math.max(5, Math.min(95, percentile));
+        // Clamp to reasonable bounds (1-99, never 0 or 100)
+        return Math.max(1, Math.min(99, Math.round(percentile)));
         
     } catch (error) {
         console.error('Error calculating percentile:', error);
-        // Fallback to score-based percentile
-        return userScore;
+        // Fallback to score-based percentile, clamped to 1-99
+        return Math.max(1, Math.min(99, userScore));
     }
 }
 
