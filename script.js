@@ -163,7 +163,7 @@ class BodyPerceptionAssessment {
     }
     
     async submitResults() {
-        const response = await fetch('/api/submit', {
+        const response = await fetch('https://fatophobiaapi.rosenpin.io/api/submit', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
