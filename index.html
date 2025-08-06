@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Perception Assessment</title>
+    <meta name="description" content="Discover your intuitive perceptions about body image through this interactive assessment">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Body Perception">
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+        <div class="container">
+            <h1 class="title">Body Perception Quiz</h1>
+            <p class="subtitle">Test your intuitive assessment of body images</p>
+            <p class="description">
+                You'll see 12 different body images. For each one, decide whether you consider the person to be "fat" or "not fat." 
+                There are no right or wrong answers - we're measuring natural perceptions.
+            </p>
+            <button id="start-btn" class="btn-primary">Start Assessment</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+                <span class="progress-text" id="progress-text">1 / 12</span>
+            </div>
+            
+            <div class="image-container">
+                <img id="current-image" src="" alt="Body image for assessment" class="assessment-image">
+                <div class="swipe-hint">
+                    <span class="swipe-left">← Not Fat</span>
+                    <span class="swipe-right">Fat →</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="not-fat-btn" class="btn-choice btn-not-fat">
+                    <span class="arrow">←</span>
+                    <span>Not Fat</span>
+                </button>
+                <button id="fat-btn" class="btn-choice btn-fat">
+                    <span>Fat</span>
+                    <span class="arrow">→</span>
+                </button>
+            </div>
+
+            <div class="instructions">
+                <p>Use buttons or keyboard: ← (Not Fat) | → (Fat)</p>
+                <p class="mobile-only">Or swipe the image left/right</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen">
+        <div class="container">
+            <h2>Your Assessment Results</h2>
+            
+            <div class="results-grids">
+                <div class="grid-section">
+                    <h3>You marked as "Not Fat"</h3>
+                    <div id="not-fat-grid" class="image-grid"></div>
+                </div>
+                
+                <div class="grid-section">
+                    <h3>You marked as "Fat"</h3>
+                    <div id="fat-grid" class="image-grid"></div>
+                </div>
+            </div>
+
+            <div class="spectrum-section">
+                <h3>Your Body Perception Tendency</h3>
+                <div class="spectrum-container">
+                    <div class="spectrum-labels">
+                        <span>Less likely to perceive as fat</span>
+                        <span>More likely to perceive as fat</span>
+                    </div>
+                    <div class="spectrum-bar">
+                        <div class="spectrum-marker" id="user-marker"></div>
+                    </div>
+                    <div class="spectrum-description">
+                        <p id="spectrum-text">Calculating your position...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="share-section">
+                <button id="restart-btn" class="btn-primary">Take Again</button>
+                <button id="share-btn" class="btn-secondary">Share Results</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Processing results...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

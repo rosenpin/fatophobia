@@ -1,0 +1,18 @@
+{
+  "name": "fatophob-assessment",
+  "version": "1.0.0",
+  "description": "A web-based assessment tool for body image perception tendencies",
+  "main": "index.html",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy .",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy"
+  },
+  "keywords": ["assessment", "body-image", "web-game", "cloudflare"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

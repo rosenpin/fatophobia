@@ -1,0 +1,18 @@
+# Cloudflare Worker Configuration for Body Perception Assessment
+
+name = "fatophob-assessment"
+main = "worker.js"
+compatibility_date = "2024-01-15"
+
+# Pages configuration
+pages_build_output_dir = "."
+
+# KV namespace bindings for data storage
+[[kv_namespaces]]
+binding = "ASSESSMENT_DATA"
+id = "51d6ec20098440e79fce1291faef7882"
+preview_id = "88fbf0b988764a4ba853de003e1d16ce"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
