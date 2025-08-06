@@ -4,6 +4,11 @@ name = "fatophob-assessment"
 main = "worker.js"
 compatibility_date = "2024-01-15"
 
+# Custom domain routes
+routes = [
+  { pattern = "fatophobiaapi.rosenpin.io/*", zone_name = "rosenpin.io" }
+]
+
 # KV namespace bindings for data storage
 [[kv_namespaces]]
 binding = "ASSESSMENT_DATA"
