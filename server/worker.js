@@ -33,10 +33,27 @@ export default {
 async function handleSubmit(request, env) {
     try {
         const data = await request.json();
+        const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
         
-        // Validate the submitted data
+        // Basic validation
         if (!data.responses || !Array.isArray(data.responses) || data.responses.length !== 12) {
             return createErrorResponse('Invalid response data', 400);
+        }
+        
+        // Server-side behavioral validation
+        const isValidBehavior = await validateSubmissionBehavior(data, clientIP, env);
+        
+        if (!isValidBehavior) {
+            // Return success but don't store the data (silent rejection)
+            console.log('Silently rejecting submission due to suspicious behavior');
+            return createJsonResponse({
+                success: true,
+                sessionId: generateSessionId(),
+                score: Math.floor(Math.random() * 40) + 30, // Fake score 30-70
+                percentile: Math.floor(Math.random() * 60) + 20, // Fake percentile 20-80
+                category: "About average in weight perception",
+                timestamp: new Date().toISOString()
+            });
         }
         
         // Generate a unique session ID
@@ -253,6 +270,78 @@ function getCategoryFromScore(score, percentile) {
     } else {
         return "Much more likely to perceive as overweight";
     }
+}
+
+// Validate submission for suspicious behavior and rate limiting
+async function validateSubmissionBehavior(data, clientIP, env) {
+    const compositeId = data.compositeId || 'unknown';
+    const totalTime = data.totalTime || 0;
+    const responses = data.responses || [];
+    const imageTimes = data.imageTimes || [];
+    
+    // Check rate limiting with composite ID
+    const rateLimitKey = `rate_limit:${compositeId}:${clientIP}`;
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const submissionKey = `${rateLimitKey}:${today}`;
+    
+    try {
+        const existingSubmissions = await env.ASSESSMENT_DATA.get(submissionKey);
+        const submissionCount = existingSubmissions ? parseInt(existingSubmissions) : 0;
+        
+        if (submissionCount >= 3) {
+            console.log(`Rate limit exceeded for ${compositeId}`);
+            return false;
+        }
+        
+        // Update submission count
+        await env.ASSESSMENT_DATA.put(submissionKey, (submissionCount + 1).toString(), {
+            expirationTtl: 86400 * 2 // 2 days TTL
+        });
+    } catch (error) {
+        console.error('Error checking rate limit:', error);
+        // Continue on error to not block legitimate users
+    }
+    
+    // Behavioral validation
+    
+    // 1. Check minimum total time (15 seconds)
+    if (totalTime < 15000) {
+        console.log(`Too fast completion: ${totalTime}ms`);
+        return false;
+    }
+    
+    // 2. Check for all identical responses
+    if (responses.length > 0) {
+        const allSame = responses.every(r => r.isFat === responses[0].isFat);
+        if (allSame) {
+            console.log('All responses identical');
+            return false;
+        }
+    }
+    
+    // 3. Check individual image times
+    if (imageTimes.length > 0) {
+        const tooFastCount = imageTimes.filter(time => time < 1000).length;
+        if (tooFastCount > 3) {
+            console.log(`Too many fast image responses: ${tooFastCount}`);
+            return false;
+        }
+    }
+    
+    // 4. Check for suspicious patterns (too consistent timing)
+    if (imageTimes.length >= 10) {
+        const avgTime = imageTimes.reduce((a, b) => a + b, 0) / imageTimes.length;
+        const variance = imageTimes.reduce((acc, time) => acc + Math.pow(time - avgTime, 2), 0) / imageTimes.length;
+        const stdDev = Math.sqrt(variance);
+        
+        // If responses are too consistent (bot-like), reject
+        if (stdDev < 500 && avgTime < 3000) {
+            console.log(`Too consistent timing pattern: stdDev=${stdDev}, avg=${avgTime}`);
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // Generate a unique session ID

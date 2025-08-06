@@ -50,25 +50,6 @@ We understand this is a sensitive topic that affects people deeply. This tool is
 
 ---
 
-## Technical Details
-
-Built with vanilla JavaScript and deployed on Cloudflare Pages with Workers for data collection and analysis.
-
-### Quick Start
-
-```bash
-npm install
-npm run dev
-```
-
-### Deployment
-
-```bash
-npm run deploy
-```
-
-For detailed technical setup, see [DEPLOYMENT.md](DEPLOYMENT.md).
-
 ## Privacy
 
 - No personal information collected

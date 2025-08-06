@@ -6,8 +6,15 @@ class BodyPerceptionAssessment {
             responses: [],
             imageOrder: [],
             startTime: null,
-            endTime: null
+            endTime: null,
+            imageTimes: [], // Track time for each image response
+            currentImageStartTime: null // When current image was shown
         };
+        
+        // Validation thresholds
+        this.minTotalTime = 15000; // 15 seconds minimum
+        this.minImageTime = 1000; // 1 second minimum per image
+        this.hasCompletedBefore = this.checkPreviousCompletion();
         
         this.elements = {
             welcomeScreen: document.getElementById('welcome-screen'),
@@ -38,6 +45,71 @@ class BodyPerceptionAssessment {
     init() {
         this.bindEvents();
         this.generateImageOrder();
+    }
+    
+    checkPreviousCompletion() {
+        return localStorage.getItem('body-assessment-completed') === 'true';
+    }
+    
+    markAsCompleted() {
+        localStorage.setItem('body-assessment-completed', 'true');
+        localStorage.setItem('body-assessment-completion-time', new Date().toISOString());
+    }
+    
+    isValidSubmission() {
+        const totalTime = this.gameData.endTime - this.gameData.startTime;
+        const responses = this.gameData.responses;
+        
+        // Check minimum total time
+        if (totalTime < this.minTotalTime) {
+            console.log('Submission rejected: too fast (total time)');
+            return false;
+        }
+        
+        // Check if all responses are identical
+        if (responses.length > 0) {
+            const allSame = responses.every(r => r.isFat === responses[0].isFat);
+            if (allSame) {
+                console.log('Submission rejected: all responses identical');
+                return false;
+            }
+        }
+        
+        // Check individual image response times
+        const tooFastResponses = this.gameData.imageTimes.filter(time => time < this.minImageTime);
+        if (tooFastResponses.length > 3) { // Allow a few fast responses
+            console.log('Submission rejected: too many fast responses');
+            return false;
+        }
+        
+        // Check if user has completed before
+        if (this.hasCompletedBefore) {
+            console.log('Submission rejected: repeat user');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    async generateCompositeId() {
+        // Generate a simple browser fingerprint for rate limiting
+        const components = [
+            navigator.userAgent || 'unknown',
+            navigator.language || 'unknown',
+            screen.width + 'x' + screen.height,
+            screen.colorDepth,
+            new Date().getTimezoneOffset(),
+            navigator.hardwareConcurrency || 'unknown'
+        ];
+        
+        const fingerprint = components.join('|');
+        
+        // Hash the fingerprint for privacy
+        const encoder = new TextEncoder();
+        const data = encoder.encode(fingerprint);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
     }
     
     bindEvents() {
@@ -75,6 +147,9 @@ class BodyPerceptionAssessment {
         const imageNumber = this.gameData.imageOrder[this.currentImageIndex];
         const imagePath = `src/${imageNumber}.png`;
         
+        // Track when this image was shown for timing validation
+        this.gameData.currentImageStartTime = new Date();
+        
         // Preload next image for smoother experience
         if (this.currentImageIndex < this.totalImages - 1) {
             const nextImageNumber = this.gameData.imageOrder[this.currentImageIndex + 1];
@@ -98,12 +173,19 @@ class BodyPerceptionAssessment {
     }
     
     recordResponse(isFat) {
+        const now = new Date();
         const imageNumber = this.gameData.imageOrder[this.currentImageIndex];
+        const imageResponseTime = now - this.gameData.currentImageStartTime;
+        
+        // Track individual image response time
+        this.gameData.imageTimes.push(imageResponseTime);
+        
         const response = {
             imageNumber: imageNumber,
             isFat: isFat,
-            responseTime: new Date() - this.gameData.startTime,
-            position: this.currentImageIndex + 1
+            responseTime: now - this.gameData.startTime,
+            position: this.currentImageIndex + 1,
+            imageTime: imageResponseTime
         };
         
         this.gameData.responses.push(response);
@@ -134,12 +216,26 @@ class BodyPerceptionAssessment {
         this.gameData.endTime = new Date();
         this.showLoading(true);
         
-        try {
-            // Attempt to submit data to server
-            await this.submitResults();
-        } catch (error) {
-            console.warn('Failed to submit to server, using fallback:', error);
+        // Check if submission should be sent to server
+        const shouldSubmitToServer = this.isValidSubmission();
+        
+        if (shouldSubmitToServer) {
+            try {
+                // Attempt to submit data to server
+                await this.submitResults();
+                // Mark as completed only after successful server submission
+                this.markAsCompleted();
+            } catch (error) {
+                console.warn('Failed to submit to server, using fallback:', error);
+                this.useLocalFallback();
+                // Still mark as completed to prevent future submissions
+                this.markAsCompleted();
+            }
+        } else {
+            // Use local fallback for invalid submissions
+            console.log('Using local fallback due to invalid submission');
             this.useLocalFallback();
+            // Don't mark as completed for invalid submissions to allow legitimate retry
         }
         
         this.showLoading(false);
@@ -147,6 +243,8 @@ class BodyPerceptionAssessment {
     }
     
     async submitResults() {
+        const compositeId = await this.generateCompositeId();
+        
         const response = await fetch('https://fatophobiaapi.rosenpin.io/api/submit', {
             method: 'POST',
             headers: {
@@ -156,7 +254,9 @@ class BodyPerceptionAssessment {
                 responses: this.gameData.responses,
                 imageOrder: this.gameData.imageOrder,
                 totalTime: this.gameData.endTime - this.gameData.startTime,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                compositeId: compositeId,
+                imageTimes: this.gameData.imageTimes
             })
         });
         

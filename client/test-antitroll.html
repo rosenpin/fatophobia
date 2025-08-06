@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Troll System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button { margin: 5px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .description { font-size: 0.9em; color: #666; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Anti-Troll System Test Suite</h1>
+    <p>This page tests the various anti-trolling mechanisms to ensure they work correctly.</p>
+    
+    <div class="test-section">
+        <h2>1. Client-Side Validation Tests</h2>
+        <div class="description">These tests check client-side validation without sending data to server</div>
+        
+        <button onclick="testClientValidation()">Run Client Validation Tests</button>
+        <div id="client-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. localStorage Repeat Detection</h2>
+        <div class="description">Test localStorage-based repeat usage detection</div>
+        
+        <button onclick="testLocalStorageRepeat()">Test Repeat Detection</button>
+        <button onclick="clearLocalStorage()">Clear localStorage</button>
+        <div id="localstorage-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Browser Fingerprint Generation</h2>
+        <div class="description">Test composite ID generation for rate limiting</div>
+        
+        <button onclick="testFingerprint()">Generate Fingerprint</button>
+        <div id="fingerprint-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Simulated Trolling Attempts</h2>
+        <div class="description">Simulate various trolling behaviors to test filtering</div>
+        
+        <button onclick="simulateTrolling()">Simulate Troll Behaviors</button>
+        <div id="troll-results"></div>
+    </div>
+
+    <script>
+        // Include the main assessment class for testing
+        // We'll create a simplified version here
+        
+        class TestAssessment {
+            constructor() {
+                this.totalImages = 12;
+                this.minTotalTime = 15000;
+                this.minImageTime = 1000;
+                this.hasCompletedBefore = this.checkPreviousCompletion();
+            }
+            
+            checkPreviousCompletion() {
+                return localStorage.getItem('body-assessment-completed') === 'true';
+            }
+            
+            markAsCompleted() {
+                localStorage.setItem('body-assessment-completed', 'true');
+                localStorage.setItem('body-assessment-completion-time', new Date().toISOString());
+            }
+            
+            isValidSubmission(gameData) {
+                const totalTime = gameData.endTime - gameData.startTime;
+                const responses = gameData.responses;
+                
+                if (totalTime < this.minTotalTime) {
+                    return { valid: false, reason: 'too fast (total time)' };
+                }
+                
+                if (responses.length > 0) {
+                    const allSame = responses.every(r => r.isFat === responses[0].isFat);
+                    if (allSame) {
+                        return { valid: false, reason: 'all responses identical' };
+                    }
+                }
+                
+                const tooFastResponses = gameData.imageTimes.filter(time => time < this.minImageTime);
+                if (tooFastResponses.length > 3) {
+                    return { valid: false, reason: 'too many fast responses' };
+                }
+                
+                if (this.hasCompletedBefore) {
+                    return { valid: false, reason: 'repeat user' };
+                }
+                
+                return { valid: true, reason: 'valid submission' };
+            }
+            
+            async generateCompositeId() {
+                const components = [
+                    navigator.userAgent || 'unknown',
+                    navigator.language || 'unknown',
+                    screen.width + 'x' + screen.height,
+                    screen.colorDepth,
+                    new Date().getTimezoneOffset(),
+                    navigator.hardwareConcurrency || 'unknown'
+                ];
+                
+                const fingerprint = components.join('|');
+                const encoder = new TextEncoder();
+                const data = encoder.encode(fingerprint);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+            }
+        }
+        
+        const testAssessment = new TestAssessment();
+        
+        function testClientValidation() {
+            const results = document.getElementById('client-results');
+            results.innerHTML = '<h3>Running client-side validation tests...</h3>';
+            
+            const tests = [
+                {
+                    name: 'Valid submission',
+                    data: {
+                        startTime: new Date(Date.now() - 20000),
+                        endTime: new Date(),
+                        responses: [
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true}
+                        ],
+                        imageTimes: Array(12).fill(0).map(() => Math.random() * 3000 + 1500)
+                    }
+                },
+                {
+                    name: 'Too fast completion',
+                    data: {
+                        startTime: new Date(Date.now() - 5000),
+                        endTime: new Date(),
+                        responses: [
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true}
+                        ],
+                        imageTimes: Array(12).fill(400)
+                    }
+                },
+                {
+                    name: 'All responses identical',
+                    data: {
+                        startTime: new Date(Date.now() - 20000),
+                        endTime: new Date(),
+                        responses: Array(12).fill({isFat: true}),
+                        imageTimes: Array(12).fill(0).map(() => Math.random() * 3000 + 1500)
+                    }
+                },
+                {
+                    name: 'Too many fast image responses',
+                    data: {
+                        startTime: new Date(Date.now() - 20000),
+                        endTime: new Date(),
+                        responses: [
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                            {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true}
+                        ],
+                        imageTimes: [500, 400, 300, 1500, 600, 400, 2000, 500, 300, 1800, 200, 1600]
+                    }
+                }
+            ];
+            
+            let output = '';
+            tests.forEach(test => {
+                const result = testAssessment.isValidSubmission(test.data);
+                const cssClass = (test.name === 'Valid submission' && result.valid) || 
+                                (test.name !== 'Valid submission' && !result.valid) ? 'pass' : 'fail';
+                output += `<div class="test-result ${cssClass}">
+                    <strong>${test.name}:</strong> ${result.valid ? 'PASSED' : 'REJECTED'} - ${result.reason}
+                </div>`;
+            });
+            
+            results.innerHTML = '<h3>Client Validation Results:</h3>' + output;
+        }
+        
+        function testLocalStorageRepeat() {
+            const results = document.getElementById('localstorage-results');
+            
+            const beforeCompletion = testAssessment.checkPreviousCompletion();
+            testAssessment.markAsCompleted();
+            const afterCompletion = testAssessment.checkPreviousCompletion();
+            
+            results.innerHTML = `
+                <h3>localStorage Repeat Detection Results:</h3>
+                <div class="test-result ${!beforeCompletion ? 'pass' : 'fail'}">
+                    Before marking complete: ${beforeCompletion ? 'Already completed' : 'Not completed'} 
+                    ${!beforeCompletion ? '✓' : '✗'}
+                </div>
+                <div class="test-result ${afterCompletion ? 'pass' : 'fail'}">
+                    After marking complete: ${afterCompletion ? 'Already completed' : 'Not completed'} 
+                    ${afterCompletion ? '✓' : '✗'}
+                </div>
+                <p><small>localStorage value: ${localStorage.getItem('body-assessment-completed')}</small></p>
+            `;
+        }
+        
+        function clearLocalStorage() {
+            localStorage.removeItem('body-assessment-completed');
+            localStorage.removeItem('body-assessment-completion-time');
+            testAssessment.hasCompletedBefore = false;
+            document.getElementById('localstorage-results').innerHTML = '<div class="test-result pass">localStorage cleared ✓</div>';
+        }
+        
+        async function testFingerprint() {
+            const results = document.getElementById('fingerprint-results');
+            results.innerHTML = '<p>Generating fingerprint...</p>';
+            
+            try {
+                const id1 = await testAssessment.generateCompositeId();
+                const id2 = await testAssessment.generateCompositeId();
+                
+                results.innerHTML = `
+                    <h3>Browser Fingerprint Results:</h3>
+                    <div class="test-result ${id1 && id1.length === 16 ? 'pass' : 'fail'}">
+                        Fingerprint generated: ${id1} (${id1.length} chars) ${id1.length === 16 ? '✓' : '✗'}
+                    </div>
+                    <div class="test-result ${id1 === id2 ? 'pass' : 'fail'}">
+                        Consistency check: ${id1 === id2 ? 'Same ID generated twice ✓' : 'Different IDs ✗'}
+                    </div>
+                    <p><small>Components: UserAgent, Language, Screen, ColorDepth, Timezone, HardwareConcurrency</small></p>
+                `;
+            } catch (error) {
+                results.innerHTML = `<div class="test-result fail">Error generating fingerprint: ${error.message}</div>`;
+            }
+        }
+        
+        function simulateTrolling() {
+            const results = document.getElementById('troll-results');
+            results.innerHTML = '<h3>Simulating various trolling behaviors...</h3>';
+            
+            const trollAttempts = [
+                {
+                    name: 'Speed Troller',
+                    description: 'Completes in 3 seconds, all responses "fat"',
+                    simulation: () => {
+                        return testAssessment.isValidSubmission({
+                            startTime: new Date(Date.now() - 3000),
+                            endTime: new Date(),
+                            responses: Array(12).fill({isFat: true}),
+                            imageTimes: Array(12).fill(250)
+                        });
+                    }
+                },
+                {
+                    name: 'Pattern Troller',
+                    description: 'Takes reasonable time but all responses identical',
+                    simulation: () => {
+                        return testAssessment.isValidSubmission({
+                            startTime: new Date(Date.now() - 25000),
+                            endTime: new Date(),
+                            responses: Array(12).fill({isFat: false}),
+                            imageTimes: Array(12).fill(0).map(() => Math.random() * 1000 + 1500)
+                        });
+                    }
+                },
+                {
+                    name: 'Bot Troller',
+                    description: 'Very consistent timing (bot-like behavior)',
+                    simulation: () => {
+                        return testAssessment.isValidSubmission({
+                            startTime: new Date(Date.now() - 24000),
+                            endTime: new Date(),
+                            responses: [
+                                {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                                {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true},
+                                {isFat: false}, {isFat: true}, {isFat: false}, {isFat: true}
+                            ],
+                            imageTimes: Array(12).fill(2000) // Exactly 2 seconds each
+                        });
+                    }
+                }
+            ];
+            
+            let output = '';
+            trollAttempts.forEach(attempt => {
+                const result = attempt.simulation();
+                const blocked = !result.valid;
+                output += `<div class="test-result ${blocked ? 'pass' : 'fail'}">
+                    <strong>${attempt.name}:</strong> ${blocked ? 'BLOCKED' : 'ALLOWED'} ✓<br>
+                    <small>${attempt.description}</small><br>
+                    <small>Reason: ${result.reason}</small>
+                </div>`;
+            });
+            
+            results.innerHTML = '<h3>Troll Simulation Results:</h3>' + output;
+        }
+    </script>
+</body>
+</html>
